@@ -58,7 +58,7 @@ public class DocumentBrowser {
 
     private String autoGenericCode(int number, int width) {
         String result = "";
-        result = String.format("%0" + width + "d", number );
+        result = String.format("%0" + width + "d", number);
 
         return result;
     }
@@ -247,8 +247,9 @@ public class DocumentBrowser {
      */
     public String getUrlContent(String url) {
         String urlContent = "";
-        if (sendGet(url) != null) {
-            urlContent = sendGet(url).toString();
+        Content content = sendGet(url);
+        if (content != null) {
+            urlContent = content.toString();
         }
         return urlContent;
     }
