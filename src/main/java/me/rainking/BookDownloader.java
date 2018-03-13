@@ -6,9 +6,9 @@ import java.io.IOException;
 import java.util.Scanner;
 
 /**
- * @description:
- * @author: Rain
- * @date: 2018/3/7 23:22
+ * @description
+ * @author Rain
+ * @date 2018/3/7 23:22
  */
 public class BookDownloader {
 
@@ -25,7 +25,7 @@ public class BookDownloader {
                 return;
             } else {
                 browser.downloadWholeDocument(cid);
-                System.out.println(cid + "下载完成。");
+                System.out.println(cid + "完成，请到out文件夹查看。");
             }
         }
 

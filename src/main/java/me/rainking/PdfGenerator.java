@@ -10,28 +10,33 @@ import java.util.Arrays;
 import java.util.List;
 
 /**
- * @description: 处理本地文件
- * @author: Rain
- * @date: 2018/3/7 19:38
+ * @description 处理本地文件
+ * @author Rain
+ * @date 2018/3/7 19:38
  */
 public class PdfGenerator {
 
 
     /**
      * 使用图片创建PDF文件
-     * @param srcPahOfImg 图片文件夹路径
+     *
+     * @param srcPahOfImg  图片文件夹路径
      * @param desPathOfPdf PDF存储路径
      * @throws DocumentException pdf相关错误
-     * @throws IOException 图片相关错误
+     * @throws IOException       图片相关错误
      */
     public static void creatPDF(String srcPahOfImg, String desPathOfPdf) throws DocumentException, IOException {
 
         File file = new File(srcPahOfImg);
-        List<File> files = Arrays.asList(file.listFiles());
 
-        if (files == null || files.size() == 0) {
+        File[] picFiles = file.listFiles();
+
+        if (picFiles == null || picFiles.length == 0) {
             return;
         }
+
+        List<File> files = Arrays.asList(picFiles);
+
 
         //需要根据第一页创建document的大小
         //如果不根据第一页创建，即使修改document的大小也不会生效，困惑
@@ -46,7 +51,6 @@ public class PdfGenerator {
             document.setPageSize(new Rectangle(img.getWidth(), img.getHeight()));
             document.add(img);
         }
-        //关闭容器
         document.close();
     }
 

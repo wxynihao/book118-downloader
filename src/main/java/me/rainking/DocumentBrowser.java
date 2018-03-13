@@ -1,21 +1,12 @@
 package me.rainking;
 
 import com.itextpdf.text.DocumentException;
-import org.apache.http.HttpEntity;
-import org.apache.http.HttpStatus;
-import org.apache.http.client.ClientProtocolException;
 import org.apache.http.client.fluent.Content;
 import org.apache.http.client.fluent.Request;
-import org.apache.http.client.methods.CloseableHttpResponse;
-import org.apache.http.client.methods.HttpGet;
-import org.apache.http.entity.ContentType;
-import org.apache.http.impl.client.CloseableHttpClient;
-import org.apache.http.impl.client.HttpClients;
-import org.apache.http.util.EntityUtils;
+
 
 import java.io.*;
 import java.net.URLEncoder;
-import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -24,18 +15,40 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 /**
- * @description: 文档浏览，包含获取起始页和全部预览图的方法
- * @author: Rain
- * @date: 2018/3/7 19:26
+ * @author Rain
+ * @description 文档浏览，包含获取起始页和全部预览图的方法
+ * @date 2018/3/7 19:26
  */
 public class DocumentBrowser {
 
+    /**
+     * 匹配页面中隐藏的input的值，用于获取文档信息
+     */
     private static Pattern inputPattern = Pattern.compile("<input type=\"hidden\" id=\"(.*?)\" value=\"(.*?)\".*?/>");
+    /**
+     * 用于获取input标签中的id
+     */
     private static Pattern idPattern = Pattern.compile(".*id=\"(.*?)\"");
+    /**
+     * 用于获取input标签中的value
+     */
     private static Pattern valuePattern = Pattern.compile(".*value=\"(.*?)\"");
+    /**
+     * 在请求下一页的信息时，从返回的json数据中获取下一页的编号
+     */
     private static Pattern nextPagePattern = Pattern.compile("NextPage\":\"(.*?)\",");
 
 
+    private static final int MAX_RETRY_TIMES = 5;
+
+
+    /**
+     * 下载文档的全部图片
+     *
+     * @param documentId 文档编号
+     * @throws IOException pdf创建错误
+     * @throws DocumentException pdf创建错误
+     */
     public void downloadWholeDocument(String documentId) throws IOException, DocumentException {
         List<String> imgUrlList = getImgUrlOfDocument(documentId);
 
@@ -47,38 +60,44 @@ public class DocumentBrowser {
 
         int sizeOfBook = imgUrlList.size();
         int page = 1;
+        System.out.println("开始下载...");
         for (String imgUrl : imgUrlList) {
             downloadFile(imgUrl, srcPath + "/" + autoGenericCode(page, 3) + ".gif");
             System.out.println(page + "/" + sizeOfBook);
             page++;
         }
 
+        System.out.println("开始生成...");
+
         PdfGenerator.creatPDF(srcPath, desPath + "/" + documentId + ".pdf");
     }
 
+    /**
+     * 将数字字符串的左边补充0，使其长度达到指定长度
+     *
+     * @param number 需要处理的数字
+     * @param width  补充后字符串长度
+     * @return 通过填充0达到长度的数字字符串
+     */
     private String autoGenericCode(int number, int width) {
-        String result = "";
-        result = String.format("%0" + width + "d", number);
-
-        return result;
+        return String.format("%0" + width + "d", number);
     }
 
-    public static boolean mkDirectory(String path) {
-        File file = null;
+    /**
+     * 文件夹不存在时创建文件夹
+     *
+     * @param path 文件夹路径
+     * @return 创建是否成功
+     */
+    private static boolean mkDirectory(String path) {
         try {
-            file = new File(path);
-            if (!file.exists()) {
-                return file.mkdirs();
-            } else {
-                return false;
-            }
+            File file = new File(path);
+            return !file.exists() && file.mkdirs();
         } catch (Exception e) {
-        } finally {
-            file = null;
+            System.out.println("文件夹创建错误，请尝试使用管理员权限运行！");
         }
         return false;
     }
-
 
     /**
      * 获取文档的全部预览图片地址
@@ -96,10 +115,12 @@ public class DocumentBrowser {
 
         String nextPage = "";
 
-        while (!nextPage.equals("ReadLimit")) {
+        System.out.println("开始获取链接，请耐心等待...");
+        while (!"ReadLimit".equals(nextPage)) {
             nextPage = getNextPage(pdfInfo);
-            if (!nextPage.equals("ReadLimit")) {
+            if (!"ReadLimit".equals(nextPage)) {
                 imgUrlList.add(urlPrefix + nextPage);
+                System.out.println("获取到第" + imgUrlList.size() + "页。");
             }
 
             try {
@@ -114,22 +135,18 @@ public class DocumentBrowser {
         return imgUrlList;
     }
 
-//    final String requrl = "//view43.book118.com/?readpage=A0uyuIYdYhay1fq@KX_aEg==&furl=YOQStEpojXCy0xJO83bqoAVYhrL_yFZqP4Ozsj8XfKNfzsc8uPp1xb6rEMxHNfHaLhdOot8ZnYZW9dtUywtqpMfl@dBGXLrSSZrkJBCQKDaSlrKKrCXYvw==&n=1";
-
     /**
      * 获取文档的预览地址
      *
      * @param documentId 文档的编号
      * @return 预览地址
      */
-    public Map<String, String> getPdfInfo(String documentId) {
+    private Map<String, String> getPdfInfo(String documentId) {
 
         String url = "https://max.book118.com/index.php?g=Home&m=View&a=viewUrl&flag=1&cid=" + documentId;
         String pdfPageUrlStr = getUrlContent(url);
 
-//        pdfPageUrlStr = requrl;
-
-        if (pdfPageUrlStr.equals("")) {
+        if ("".equals(pdfPageUrlStr)) {
             return null;
         } else {
             pdfPageUrlStr = "https:" + pdfPageUrlStr;
@@ -137,6 +154,7 @@ public class DocumentBrowser {
 
         String pdfPageHtml = getUrlContent(pdfPageUrlStr);
         if (pdfPageHtml.contains("文件不存在")) {
+            System.out.println("获取预览地址失败，请稍后再试！");
             return null;
         }
 
@@ -168,7 +186,6 @@ public class DocumentBrowser {
             pdfInfo.put(id, value);
         }
 
-
         int posOfQue = pdfPageUrlStr.indexOf("?");
         pdfInfo.put("host", pdfPageUrlStr.substring(0, posOfQue));
 
@@ -179,10 +196,10 @@ public class DocumentBrowser {
     /**
      * 获取下一页的图片地址编号
      *
-     * @param pdfInfo
-     * @return
+     * @param pdfInfo pdf的一些信息
+     * @return 下一页的编号
      */
-    public String getNextPage(Map<String, String> pdfInfo) {
+    private String getNextPage(Map<String, String> pdfInfo) {
 
         String nextPageUrl = pdfInfo.get("host") + "/pdf/GetNextPage/?";
 
@@ -245,7 +262,7 @@ public class DocumentBrowser {
      * @param url 访问的链接
      * @return 服务端返回的结果的字符串
      */
-    public String getUrlContent(String url) {
+    private String getUrlContent(String url) {
         String urlContent = "";
         Content content = sendGet(url);
         if (content != null) {
@@ -262,84 +279,22 @@ public class DocumentBrowser {
      */
     public Content sendGet(String url) {
         Content content = null;
-        try {
-            content = Request.Get(url).connectTimeout(50000).socketTimeout(50000).execute().returnContent();
-        } catch (IOException e) {
-            e.printStackTrace();
+
+        int retryTimes = 0;
+
+        while (content == null && retryTimes != MAX_RETRY_TIMES) {
+            try {
+                retryTimes++;
+                content = Request.Get(url).connectTimeout(50000).socketTimeout(50000).execute().returnContent();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
         }
+
+        if (content == null) {
+            System.out.println(url + "下载失败！");
+        }
+
         return content;
     }
-
-    public static String httpGet(String url) {
-
-        String result = "";
-
-        // 创建一个客户端
-        CloseableHttpClient httpclient = HttpClients.createDefault();
-        // 创建get方法
-        HttpGet httpget = new HttpGet(url);
-
-        CloseableHttpResponse response = null;
-        try {
-            response = httpclient.execute(httpget);
-            int statuscode = response.getStatusLine().getStatusCode();
-            if (statuscode == HttpStatus.SC_OK) {
-                HttpEntity entity = response.getEntity();
-                if (entity != null) {
-
-                    ContentType contentType = ContentType.getOrDefault(entity);
-                    Charset charset = contentType.getCharset();
-                    result = EntityUtils.toString(entity, charset);
-                }
-            }
-            response.close();
-
-        } catch (ClientProtocolException e) {
-            // TODO Auto-generated catch block
-            e.printStackTrace();
-            result = e.getMessage().toString();
-        } catch (IOException e) {
-            // TODO Auto-generated catch block
-            e.printStackTrace();
-            result = e.getMessage().toString();
-        }
-
-        return result;
-
-    }
-
-    private static final CloseableHttpClient httpclient = HttpClients.createDefault();
-    private static final String userAgent = "Mozilla/5.0 (Windows NT 6.2; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/54.0.2840.87 Safari/537.36";
-
-    /**
-     * 发送HttpGet请求
-     *
-     * @param url 请求地址
-     * @return 返回字符串
-     */
-    public static String sendGetReq(String url) {
-        String result = null;
-        CloseableHttpResponse response = null;
-        try {
-            HttpGet httpGet = new HttpGet(url);
-            httpGet.setHeader("User-Agent", userAgent);
-            response = httpclient.execute(httpGet);
-            HttpEntity entity = response.getEntity();
-            if (entity != null) {
-                result = EntityUtils.toString(entity);
-            }
-        } catch (Exception e) {
-            e.printStackTrace();
-        } finally {
-            if (response != null) {
-                try {
-                    response.close();
-                } catch (IOException e) {
-                }
-            }
-        }
-        return result;
-    }
-
-
 }
