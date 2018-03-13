@@ -2,15 +2,6 @@ package me.rainking;
 
 import org.junit.Test;
 
-import java.io.File;
-import java.io.IOException;
-import java.lang.reflect.Array;
-import java.util.Arrays;
-import java.util.List;
-
-import static java.util.stream.Collectors.toList;
-import static org.junit.Assert.*;
-
 /**
  * @description:
  * @author: Rain

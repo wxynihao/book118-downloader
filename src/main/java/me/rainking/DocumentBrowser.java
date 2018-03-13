@@ -4,7 +4,6 @@ import com.itextpdf.text.DocumentException;
 import org.apache.http.client.fluent.Content;
 import org.apache.http.client.fluent.Request;
 
-
 import java.io.*;
 import java.net.URLEncoder;
 import java.util.ArrayList;
