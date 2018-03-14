@@ -45,7 +45,7 @@ public class DocumentBrowser {
      * 下载文档的全部图片
      *
      * @param documentId 文档编号
-     * @throws IOException pdf创建错误
+     * @throws IOException       pdf创建错误
      * @throws DocumentException pdf创建错误
      */
     public void downloadWholeDocument(String documentId) throws IOException, DocumentException {
@@ -69,6 +69,32 @@ public class DocumentBrowser {
         System.out.println("开始生成...");
 
         PdfGenerator.creatPDF(srcPath, desPath + "/" + documentId + ".pdf");
+
+        deleteDir(new File(srcPath));
+
+    }
+
+    /**
+     * 递归删除目录下的所有文件及子目录下所有文件
+     *
+     * @param dir 将要删除的文件目录
+     * @return boolean Returns "true" if all deletions were successful.
+     * If a deletion fails, the method stops attempting to
+     * delete and returns "false".
+     */
+    private static boolean deleteDir(File dir) {
+        if (dir.isDirectory()) {
+            String[] children = dir.list();
+            //递归删除目录中的子目录下
+            for (String aChildren : children) {
+                boolean success = deleteDir(new File(dir, aChildren));
+                if (!success) {
+                    return false;
+                }
+            }
+        }
+        // 目录此时为空，可以删除
+        return dir.delete();
     }
 
     /**
