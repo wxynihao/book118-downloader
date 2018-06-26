@@ -141,11 +141,13 @@ public class DocumentBrowser {
         String nextPage = "";
 
         System.out.println("开始获取链接，请耐心等待...");
-        while (!"ReadLimit".equals(nextPage)) {
+        while (true) {
             nextPage = getNextPage(pdfInfo);
-            if (!"ReadLimit".equals(nextPage)) {
+            if(!("ReadLimit".equals(nextPage) || "Over".equals(nextPage))){
                 imgUrlList.add(urlPrefix + nextPage);
                 System.out.println("获取到第" + imgUrlList.size() + "页。");
+            }else {
+                break;
             }
 
             try {
