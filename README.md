@@ -12,7 +12,7 @@
 
 # 2. 使用手册
 
-1. 下载链接 [百度网盘](https://pan.baidu.com/s/1HWZXx7k-GMBmP12juMRzWw)
+1. 下载链接 [百度网盘](https://pan.baidu.com/s/1k0plrIGgfLewHC3g09Qj1A)
 
 2. 双击run.bat即可运行该软件，如果不能运行请检查是否已安装jre（Java Runtime Environment）。
 
