@@ -15,9 +15,8 @@ public class BookDownloader {
     public static void main(String[] args) throws IOException, DocumentException {
 
         DocumentBrowser browser = new DocumentBrowser();
-
+//        browser.downloadWholeDocument("7000010006001146");
         Scanner sc = new Scanner(System.in);
-
         while (true) {
             System.out.println("请输入文档编号并回车（#结束）：");
             String cid = sc.nextLine();
@@ -28,8 +27,5 @@ public class BookDownloader {
                 System.out.println(cid + "完成，请到out文件夹查看。");
             }
         }
-
-
     }
-
 }

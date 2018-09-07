@@ -1,17 +1,18 @@
 package me.rainking;
 
+import cn.hutool.core.bean.BeanUtil;
+import cn.hutool.core.io.FileUtil;
+import cn.hutool.core.util.ReUtil;
+import cn.hutool.core.util.StrUtil;
+import cn.hutool.http.HtmlUtil;
+import cn.hutool.http.HttpUtil;
+import cn.hutool.json.JSONUtil;
+import cn.hutool.log.StaticLog;
 import com.itextpdf.text.DocumentException;
-import org.apache.http.client.fluent.Content;
-import org.apache.http.client.fluent.Request;
 
 import java.io.*;
 import java.net.URLEncoder;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
+import java.util.*;
 
 /**
  * @author Rain
@@ -19,27 +20,6 @@ import java.util.regex.Pattern;
  * @date 2018/3/7 19:26
  */
 public class DocumentBrowser {
-
-    /**
-     * 匹配页面中隐藏的input的值，用于获取文档信息
-     */
-    private static Pattern inputPattern = Pattern.compile("<input type=\"hidden\" id=\"(.*?)\" value=\"(.*?)\".*?/>");
-    /**
-     * 用于获取input标签中的id
-     */
-    private static Pattern idPattern = Pattern.compile(".*id=\"(.*?)\"");
-    /**
-     * 用于获取input标签中的value
-     */
-    private static Pattern valuePattern = Pattern.compile(".*value=\"(.*?)\"");
-    /**
-     * 在请求下一页的信息时，从返回的json数据中获取下一页的编号
-     */
-    private static Pattern nextPagePattern = Pattern.compile("NextPage\":\"(.*?)\",");
-
-
-    private static final int MAX_RETRY_TIMES = 5;
-
 
     /**
      * 下载文档的全部图片
@@ -54,47 +34,20 @@ public class DocumentBrowser {
         String srcPath = "./temp/" + documentId;
         String desPath = "./out";
 
-        mkDirectory(srcPath);
-        mkDirectory(desPath);
+        FileUtil.mkdir(new File(srcPath));
+        FileUtil.mkdir(new File(desPath));
 
         int sizeOfBook = imgUrlList.size();
         int page = 1;
-        System.out.println("开始下载...");
+        StaticLog.info("开始下载...");
         for (String imgUrl : imgUrlList) {
-            downloadFile(imgUrl, srcPath + "/" + autoGenericCode(page, 3) + ".gif");
-            System.out.println(page + "/" + sizeOfBook);
+            downloadFile(imgUrl, srcPath + "/" + autoGenericCode(page, String.valueOf(sizeOfBook).length()) + ".gif");
+            StaticLog.info(page + "/" + sizeOfBook);
             page++;
         }
-
-        System.out.println("开始生成...");
-
+        StaticLog.info("开始生成...");
         PdfGenerator.creatPDF(srcPath, desPath + "/" + documentId + ".pdf");
-
-        deleteDir(new File(srcPath));
-
-    }
-
-    /**
-     * 递归删除目录下的所有文件及子目录下所有文件
-     *
-     * @param dir 将要删除的文件目录
-     * @return boolean Returns "true" if all deletions were successful.
-     * If a deletion fails, the method stops attempting to
-     * delete and returns "false".
-     */
-    private static boolean deleteDir(File dir) {
-        if (dir.isDirectory()) {
-            String[] children = dir.list();
-            //递归删除目录中的子目录下
-            for (String aChildren : children) {
-                boolean success = deleteDir(new File(dir, aChildren));
-                if (!success) {
-                    return false;
-                }
-            }
-        }
-        // 目录此时为空，可以删除
-        return dir.delete();
+        FileUtil.del(new File(srcPath));
     }
 
     /**
@@ -109,22 +62,6 @@ public class DocumentBrowser {
     }
 
     /**
-     * 文件夹不存在时创建文件夹
-     *
-     * @param path 文件夹路径
-     * @return 创建是否成功
-     */
-    private static boolean mkDirectory(String path) {
-        try {
-            File file = new File(path);
-            return !file.exists() && file.mkdirs();
-        } catch (Exception e) {
-            System.out.println("文件夹创建错误，请尝试使用管理员权限运行！");
-        }
-        return false;
-    }
-
-    /**
      * 获取文档的全部预览图片地址
      *
      * @param documentId 文档的编号
@@ -132,33 +69,25 @@ public class DocumentBrowser {
      */
     public List<String> getImgUrlOfDocument(String documentId) {
 
-        List<String> imgUrlList = new ArrayList<>(128);
+        List<String> imgUrlList = new LinkedList<>();
+        PdfInfo pdfInfo = getPdfInfo(documentId);
+        String nextPage;
 
-        Map<String, String> pdfInfo = getPdfInfo(documentId);
-
-        String urlPrefix = pdfInfo.get("host") + "img/?img=";
-
-        String nextPage = "";
-
-        System.out.println("开始获取链接，请耐心等待...");
-        while (true) {
+        StaticLog.info("开始获取链接，请耐心等待...");
+        while (pdfInfo != null) {
             nextPage = getNextPage(pdfInfo);
-            if(!("ReadLimit".equals(nextPage) || "Over".equals(nextPage))){
-                imgUrlList.add(urlPrefix + nextPage);
-                System.out.println("获取到第" + imgUrlList.size() + "页。");
-            }else {
+            if (!Constants.TAG_OF_END.contains(nextPage)) {
+                imgUrlList.add(Constants.IMG_PREFIX_URL + nextPage);
+                StaticLog.info("获取到第" + imgUrlList.size() + "页。");
+            } else {
                 break;
             }
-
             try {
-                pdfInfo.put("img", URLEncoder.encode(nextPage, "utf8"));
+                pdfInfo.setImg(URLEncoder.encode(nextPage, "utf8"));
             } catch (UnsupportedEncodingException e) {
                 e.printStackTrace();
             }
-
         }
-
-
         return imgUrlList;
     }
 
@@ -168,85 +97,50 @@ public class DocumentBrowser {
      * @param documentId 文档的编号
      * @return 预览地址
      */
-    private Map<String, String> getPdfInfo(String documentId) {
+    private PdfInfo getPdfInfo(String documentId) {
+        String url = Constants.OPEN_FULL_URL + documentId;
+        String pdfPageUrlStr = HttpUtil.get(url);
 
-        String url = "https://max.book118.com/index.php?g=Home&m=View&a=viewUrl&flag=1&cid=" + documentId;
-        String pdfPageUrlStr = getUrlContent(url);
-
-        if ("".equals(pdfPageUrlStr)) {
-            return null;
-        } else {
+        if (StrUtil.isNotBlank(pdfPageUrlStr)) {
             pdfPageUrlStr = "https:" + pdfPageUrlStr;
-        }
-
-        String pdfPageHtml = getUrlContent(pdfPageUrlStr);
-        if (pdfPageHtml.contains("文件不存在")) {
-            System.out.println("获取预览地址失败，请稍后再试！");
+        } else {
+            StaticLog.error("获取失败！");
             return null;
         }
 
-        Matcher matcher = inputPattern.matcher(pdfPageHtml);
-        List<String> result = new ArrayList<>();
-        while (matcher.find()) {
-            result.add(matcher.group());
+        String redirectPage = HttpUtil.get(pdfPageUrlStr);
+        String href = ReUtil.get(Constants.HREF_PATTERN, redirectPage, 1);
+        String pdfPageHtml = HttpUtil.get(Constants.BOOK118_VIEW_HOST + HtmlUtil.unescape(href));
+
+        if (pdfPageHtml.contains(Constants.FILE_NOT_EXIST)) {
+            StaticLog.error("获取预览地址失败，请稍后再试！");
+            return null;
         }
 
-        Map<String, String> pdfInfo = new HashMap<>();
+        List<String> result = ReUtil.findAllGroup0(Constants.INPUT_PATTERN, pdfPageHtml);
+        Map<String, String> pdfInfoMap = new HashMap<>(6);
 
         for (String inputStr : result) {
-            Matcher idMatcher = idPattern.matcher(inputStr);
-            String id = "";
-            while (idMatcher.find()) {
-                id = idMatcher.group(1).toLowerCase();
-            }
-
-            Matcher valueMatcher = valuePattern.matcher(inputStr);
-            String value = "";
-            while (valueMatcher.find()) {
+            String id = ReUtil.get(Constants.ID_PATTERN, inputStr, 1);
+            String value = ReUtil.get(Constants.VALUE_PATTERN, inputStr, 1);
+            if (StrUtil.isNotBlank(id) && StrUtil.isNotBlank(value)) {
+                id = id.toLowerCase();
                 try {
-                    value = URLEncoder.encode(valueMatcher.group(1), "utf8");
+                    value = URLEncoder.encode(value, "utf8");
                 } catch (UnsupportedEncodingException e) {
-                    e.printStackTrace();
+                    StaticLog.error(e.getMessage());
                 }
+                pdfInfoMap.put(id, value);
             }
-
-            pdfInfo.put(id, value);
         }
 
-        int posOfQue = pdfPageUrlStr.indexOf("?");
-        pdfInfo.put("host", pdfPageUrlStr.substring(0, posOfQue));
-
-
-        return pdfInfo;
+        return BeanUtil.mapToBean(pdfInfoMap, PdfInfo.class, true);
     }
 
-    /**
-     * 获取下一页的图片地址编号
-     *
-     * @param pdfInfo pdf的一些信息
-     * @return 下一页的编号
-     */
-    private String getNextPage(Map<String, String> pdfInfo) {
-
-        String nextPageUrl = pdfInfo.get("host") + "/pdf/GetNextPage/?";
-
-        String pdfInfoStr = "f=" + pdfInfo.get("url")
-                + "&img=" + pdfInfo.get("img")
-                + "&isMobile=false"
-                + "&isNet=True"
-                + "&readLimit=" + pdfInfo.get("readlimit")
-                + "&furl=" + pdfInfo.get("furl");
-
-        nextPageUrl = nextPageUrl + pdfInfoStr;
-        String nextPageJson = getUrlContent(nextPageUrl);
-
-        Matcher nextPageMatcher = nextPagePattern.matcher(nextPageJson);
-        String nextPage = "";
-        while (nextPageMatcher.find()) {
-            nextPage = nextPageMatcher.group(1);
-        }
-
-        return nextPage;
+    private String getNextPage(PdfInfo pdfInfo) {
+        String nextPageJson = HttpUtil.get(pdfInfo.getNextUrl());
+        PageInfo pageInfo = JSONUtil.toBean(nextPageJson, PageInfo.class);
+        return pageInfo.getNextPage();
     }
 
     /**
@@ -254,74 +148,13 @@ public class DocumentBrowser {
      *
      * @param url       文件的 url
      * @param localPath 本地存储路径
-     * @return 下载是否成功
      */
-    public boolean downloadFile(String url, String localPath) {
-
-        if (sendGet(url) == null) {
-            return false;
-        }
-
-        boolean isDownloaded = false;
-
-        byte[] content = sendGet(url).asBytes();
-
+    private void downloadFile(String url, String localPath) {
         File file = new File(localPath);
-        try {
-            BufferedOutputStream out = new BufferedOutputStream(new FileOutputStream(file));
-            out.write(content);
-            out.flush();
-            out.close();
+        try (FileOutputStream fileOutputStream = new FileOutputStream(file); BufferedOutputStream out = new BufferedOutputStream(fileOutputStream)) {
+            HttpUtil.download(url, out, true);
         } catch (IOException e) {
-            e.printStackTrace();
+            StaticLog.error(e.getMessage());
         }
-
-        if (file.exists() && file.length() != 0) {
-            isDownloaded = true;
-        }
-
-        return isDownloaded;
-    }
-
-    /**
-     * 获取请求的内容
-     *
-     * @param url 访问的链接
-     * @return 服务端返回的结果的字符串
-     */
-    private String getUrlContent(String url) {
-        String urlContent = "";
-        Content content = sendGet(url);
-        if (content != null) {
-            urlContent = content.toString();
-        }
-        return urlContent;
-    }
-
-    /**
-     * 使用httpclient流式API中的方法执行Get请求
-     *
-     * @param url 请求的url
-     * @return 服务端返回的内容
-     */
-    public Content sendGet(String url) {
-        Content content = null;
-
-        int retryTimes = 0;
-
-        while (content == null && retryTimes != MAX_RETRY_TIMES) {
-            try {
-                retryTimes++;
-                content = Request.Get(url).connectTimeout(50000).socketTimeout(50000).execute().returnContent();
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
-        }
-
-        if (content == null) {
-            System.out.println(url + "下载失败！");
-        }
-
-        return content;
     }
 }

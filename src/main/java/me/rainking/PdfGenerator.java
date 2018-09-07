@@ -31,15 +31,11 @@ public class PdfGenerator {
     public static void creatPDF(String srcPahOfImg, String desPathOfPdf) throws DocumentException, IOException {
 
         File file = new File(srcPahOfImg);
-
         File[] picFiles = file.listFiles();
-
         if (picFiles == null || picFiles.length == 0) {
             return;
         }
-
         List<File> files = Arrays.asList(picFiles);
-
 
         //需要根据第一页创建document的大小
         //如果不根据第一页创建，即使修改document的大小也不会生效，困惑
