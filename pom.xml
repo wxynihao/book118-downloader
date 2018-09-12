@@ -6,7 +6,7 @@
 
   <groupId>me.rainking</groupId>
   <artifactId>book118Downloader</artifactId>
-  <version>1.0</version>
+  <version>V20180912</version>
   <packaging>jar</packaging>
 
   <properties>

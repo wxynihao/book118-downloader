@@ -1,5 +1,9 @@
 # 0. Bug Fix
 
+* 2018/9/12
+
+修改viewHost为根据返回值获取  [百度网盘下载](https://pan.baidu.com/s/1waRfVY62YtDzh7BIusyP8g)
+
 * 2018/9/7
 
 基于hutool重构代码
@@ -16,9 +20,9 @@
 
 # 2. 使用手册
 
-1. 下载链接 [百度网盘](https://pan.baidu.com/s/1k0plrIGgfLewHC3g09Qj1A)
+1. 下载解压
 
-2. 双击run.bat即可运行该软件，如果不能运行请检查是否已安装jre（Java Runtime Environment）。
+2. 双击run.bat即可运行该软件，如果不能运行请检查是否已安装jre 8+（Java Runtime Environment）。
 
 3. 文档编号是预览页链接中最后的数字如： https://max.book118.com/html/2017/0611/113657916.shtm ，文档编号就是113657916。
 

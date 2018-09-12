@@ -8,7 +8,7 @@ package me.rainking;
 
 public class PdfInfo {
 
-    private String host = Constants.BOOK118_VIEW_HOST;
+    private String host;
     private String url;
     private String img;
     private String readlimit;

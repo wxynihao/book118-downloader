@@ -12,9 +12,7 @@ import java.util.List;
 
 class Constants {
 
-    static final String BOOK118_VIEW_HOST = "https://view45.book118.com";
-
-    static final String IMG_PREFIX_URL = BOOK118_VIEW_HOST + "/img/?img=";
+    static final String IMG_PREFIX_URL = "/img/?img=";
 
     static final String NEXT_PAGE_PATH = "/pdf/GetNextPage/";
 
