@@ -19,7 +19,7 @@ import java.util.*;
  * @description 文档浏览，包含获取起始页和全部预览图的方法
  * @date 2018/3/7 19:26
  */
-public class DocumentBrowser {
+class DocumentBrowser {
 
 	/**
 	 * 下载文档的全部图片
@@ -28,7 +28,7 @@ public class DocumentBrowser {
 	 * @throws IOException pdf创建错误
 	 * @throws DocumentException pdf创建错误
 	 */
-	public void downloadWholeDocument(String documentId) throws IOException, DocumentException {
+	void downloadWholeDocument(String documentId) throws IOException, DocumentException {
 		List<String> imgUrlList = getImgUrlOfDocument(documentId);
 
 		String srcPath = "./temp/" + documentId;
@@ -39,13 +39,15 @@ public class DocumentBrowser {
 
 		int sizeOfBook = imgUrlList.size();
 		int page = 1;
-		StaticLog.info("开始下载...");
+		System.out.println("\n开始下载...");
+		StringBuilder currentDownPage = new StringBuilder();
 		for (String imgUrl : imgUrlList) {
 			downloadFile(imgUrl, srcPath + "/" + autoGenericCode(page, String.valueOf(sizeOfBook).length()) + ".gif");
-			StaticLog.info(page + "/" + sizeOfBook);
+			currentDownPage.append("\r").append(String.format("已下载页数：[%d] 页", page));
+			System.out.print(currentDownPage);
 			page++;
 		}
-		StaticLog.info("开始生成...");
+		System.out.println("\n开始生成...");
 		PdfGenerator.creatPDF(srcPath, desPath + "/" + documentId + ".pdf");
 		FileUtil.del(new File(srcPath));
 	}
@@ -67,18 +69,19 @@ public class DocumentBrowser {
 	 * @param documentId 文档的编号
 	 * @return 全部图片地址
 	 */
-	public List<String> getImgUrlOfDocument(String documentId) {
+	private List<String> getImgUrlOfDocument(String documentId) {
 
 		List<String> imgUrlList = new LinkedList<>();
 		PdfInfo pdfInfo = getPdfInfo(documentId);
-		String nextPage;
-
-		StaticLog.info("开始获取链接，请耐心等待...");
+		StringBuilder currentGetPage = new StringBuilder();
+		System.out.println("开始获取...");
 		while (pdfInfo != null) {
-			nextPage = getNextPage(pdfInfo);
+			String nextPage = getNextPage(pdfInfo);
 			if (!Constants.TAG_OF_END.contains(nextPage)) {
 				imgUrlList.add(pdfInfo.getHost() + Constants.IMG_PREFIX_URL + nextPage);
-				StaticLog.info("获取到第" + imgUrlList.size() + "页。");
+				currentGetPage.append('\r')
+					.append(String.format("已获取页数：[%d] 页", imgUrlList.size()));
+				System.out.print(currentGetPage);
 			} else {
 				break;
 			}

@@ -1,8 +1,11 @@
 # 0. Bug Fix
+* 2018/9/14
+
+优化提示信息的显示  [网盘下载](https://pan.baidu.com/s/1RyRZP0mSFHhWT_M9iYKZjQ)
 
 * 2018/9/12
 
-修改viewHost为根据返回值获取  [百度网盘下载](https://pan.baidu.com/s/1waRfVY62YtDzh7BIusyP8g)
+修改viewHost为根据返回值获取  [网盘下载](https://pan.baidu.com/s/1waRfVY62YtDzh7BIusyP8g)
 
 * 2018/9/7
 
