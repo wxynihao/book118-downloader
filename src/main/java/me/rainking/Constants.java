@@ -40,4 +40,9 @@ class Constants {
      */
     static final String HREF_PATTERN = ".*href=\"(.*?)\"";
 
+
+    static final int MAX_BIT_OF_PAGE = 5;
+
+
+
 }
