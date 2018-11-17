@@ -12,7 +12,9 @@ import com.itextpdf.text.DocumentException;
 
 import java.io.*;
 import java.net.URLEncoder;
-import java.util.*;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 /**
  * @author Rain
@@ -93,8 +95,8 @@ class DocumentBrowser {
         String viewHost = pdfPageUrlStr.substring(0, endOfHost);
         String redirectPage = HttpUtil.get(pdfPageUrlStr);
         String href = ReUtil.get(Constants.HREF_PATTERN, redirectPage, 1);
-        String pdfPageHtml = HttpUtil.get(viewHost + HtmlUtil.unescape(href));
-
+        String fullUrl = viewHost.substring(0, viewHost.length()-1) + HtmlUtil.unescape(href);
+        String pdfPageHtml = HttpUtil.get(fullUrl);
         if (pdfPageHtml.contains(Constants.FILE_NOT_EXIST)) {
             StaticLog.error("获取预览地址失败，请稍后再试！");
             return null;

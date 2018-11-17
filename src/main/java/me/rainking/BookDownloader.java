@@ -17,7 +17,7 @@ public class BookDownloader {
 		DocumentBrowser browser = new DocumentBrowser();
 		try (Scanner sc = new Scanner(System.in, "UTF8")) {
 			while (true) {
-				System.out.println("请输入文档编号并回车（#结束）：");
+				System.out.print("请输入文档编号并回车（#结束）：");
 				String cid = sc.nextLine();
 				if ("#".equals(cid)) {
 					return;
