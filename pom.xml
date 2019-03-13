@@ -6,7 +6,7 @@
 
   <groupId>me.rainking</groupId>
   <artifactId>book118Downloader</artifactId>
-  <version>V20180914</version>
+  <version>V2019</version>
   <packaging>jar</packaging>
 
   <properties>
@@ -27,6 +27,12 @@
       <groupId>com.itextpdf</groupId>
       <artifactId>itextpdf</artifactId>
       <version>5.5.13</version>
+    </dependency>
+    <dependency>
+      <groupId>junit</groupId>
+      <artifactId>junit</artifactId>
+      <version>4.12</version>
+      <scope>test</scope>
     </dependency>
   </dependencies>
 

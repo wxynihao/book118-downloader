@@ -3,6 +3,12 @@
 
 ppt的下载
 
+* 2019/03/13
+
+修复 [issue#3](https://github.com/wxynihao/book118-downloader/issues/3)
+
+[下载](jar)
+
 * 2018/11/17
 
 修复某些时候URL拼接不正确导致的下载失败（156906400 下载失败）

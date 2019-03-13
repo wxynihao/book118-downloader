@@ -14,7 +14,9 @@ class Constants {
 
     static final String IMG_PREFIX_URL = "/img/?img=";
 
-    static final String NEXT_PAGE_PATH = "/pdf/GetNextPage/";
+    static final String NEXT_PAGE_PATH_1 = "/pdf/GetNextPage/";
+
+    static final String NEXT_PAGE_PATH_2 = "/PW/GetPage/";
 
     static final String OPEN_FULL_URL = "https://max.book118.com/index.php?g=Home&m=View&a=viewUrl&flag=1&cid=";
 

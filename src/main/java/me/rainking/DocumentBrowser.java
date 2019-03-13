@@ -95,7 +95,14 @@ class DocumentBrowser {
         String viewHost = pdfPageUrlStr.substring(0, endOfHost);
         String redirectPage = HttpUtil.get(pdfPageUrlStr);
         String href = ReUtil.get(Constants.HREF_PATTERN, redirectPage, 1);
-        String fullUrl = viewHost.substring(0, viewHost.length()-1) + HtmlUtil.unescape(href);
+        String fullUrl;
+        if(href != null){
+            fullUrl = viewHost.substring(0, viewHost.length()-1) + HtmlUtil.unescape(href);
+        }else {
+            fullUrl = pdfPageUrlStr;
+        }
+
+
         String pdfPageHtml = HttpUtil.get(fullUrl);
         if (pdfPageHtml.contains(Constants.FILE_NOT_EXIST)) {
             StaticLog.error("获取预览地址失败，请稍后再试！");
@@ -122,7 +129,8 @@ class DocumentBrowser {
     }
 
     private String getNextPage(PdfInfo pdfInfo) {
-        String nextPageJson = HttpUtil.get(pdfInfo.getNextUrl());
+        String nextUrl = pdfInfo.getNextUrl();
+        String nextPageJson = HttpUtil.get(nextUrl);
         PageInfo pageInfo = JSONUtil.toBean(nextPageJson, PageInfo.class);
         return pageInfo.getNextPage();
     }

@@ -17,8 +17,16 @@ public class PdfInfo {
     private boolean isNet = true;
 
     public String getNextUrl() {
-        return String.format("%s%s?f=%s&img=%s&readLimit=%s&furl=%s&isMobile=%b&isNet=%b",
-                host, Constants.NEXT_PAGE_PATH, url, img, readlimit, furl, isMobile, isNet);
+        String nextUrl=null;
+        // hotfix : 不一定彻底解决掉了问题
+        if(img != null){
+            nextUrl = String.format("%s%s?f=%s&img=%s&readLimit=%s&furl=%s&isMobile=%b&isNet=%b",
+                    host, Constants.NEXT_PAGE_PATH_1, url, img, readlimit, furl, isMobile, isNet);
+        }else {
+            nextUrl = String.format("%s%s?f=%s&img=&readLimit=%s&furl=%s&isMobile=%b&sn=0",
+                    host, Constants.NEXT_PAGE_PATH_2, url, readlimit, furl, isMobile);
+        }
+        return nextUrl;
     }
 
     public PdfInfo() {

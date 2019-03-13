@@ -16,6 +16,7 @@ public class BookDownloader {
 
 		DocumentBrowser browser = new DocumentBrowser();
 		try (Scanner sc = new Scanner(System.in, "UTF8")) {
+			System.out.println("Ver.20190313 latest: https://github.com/wxynihao/book118-downloader");
 			while (true) {
 				System.out.print("请输入文档编号并回车（#结束）：");
 				String cid = sc.nextLine();
