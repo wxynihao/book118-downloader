@@ -1,7 +1,7 @@
 
 # 1. 概述
 
-[下载](https://github.com/wxynihao/book118-downloader/releases)
+[book118-downloader 下载](https://github.com/wxynihao/book118-downloader/releases)
 
 这是一个用于下载book118可预览文档的下载器（暂不支持ppt和收费才能预览的文件）。
 
