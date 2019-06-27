@@ -1,5 +1,20 @@
 package me.rainking;
 
+import java.io.BufferedOutputStream;
+import java.io.BufferedReader;
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.FileReader;
+import java.io.IOException;
+import java.io.UnsupportedEncodingException;
+import java.net.URLEncoder;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
+import com.itextpdf.text.DocumentException;
+
 import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.io.FileUtil;
 import cn.hutool.core.util.ReUtil;
@@ -8,13 +23,6 @@ import cn.hutool.http.HtmlUtil;
 import cn.hutool.http.HttpUtil;
 import cn.hutool.json.JSONUtil;
 import cn.hutool.log.StaticLog;
-import com.itextpdf.text.DocumentException;
-
-import java.io.*;
-import java.net.URLEncoder;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
 
 /**
  * @author Rain
@@ -23,18 +31,62 @@ import java.util.Map;
  */
 class DocumentBrowser {
 
+    String sTempPath = "./temp";
+    String sDesPath = "./out";
+
+    List<String> readTaskList() {
+        List<String> aTaskDocumentId = new ArrayList<>();
+        String sTaskListPath = sDesPath + "/tasklist.txt";
+        File pFile = new File(sTaskListPath);
+        String sLine = null;
+
+        if (pFile.exists()) {
+            BufferedReader pReader;
+            try {
+                pReader = new BufferedReader(new FileReader(pFile));
+                while ((sLine = pReader.readLine()) != null) {
+                    sLine = sLine.trim();
+                    if (sLine.length() > 0) { aTaskDocumentId.add(sLine); }
+                }
+                pReader.close();
+            } catch (IOException e) {
+                // TODO Auto-generated catch block
+                e.printStackTrace();
+            }
+        }
+        return aTaskDocumentId;
+    }
+
+    void writeTaskList(List<String> pLists) {
+        String sTaskListPath = sDesPath + "/tasklist.txt";
+        File pFile = new File(sTaskListPath);
+        if (! pFile.exists()) {
+            FileUtil.mkdir(sDesPath);
+        }
+        try {
+            BufferedOutputStream pWriter = new BufferedOutputStream(new FileOutputStream(sTaskListPath));
+            for (String sDocumentId : pLists) {
+                pWriter.write(sDocumentId.getBytes());
+                pWriter.write('\n');
+            }
+            pWriter.close();
+        } catch (IOException e) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+        }
+    }
+
     /**
-     * 下载文档的全部图片
+     *  下载文档的全部图片
      *
      * @param documentId 文档编号
      * @throws IOException       pdf创建错误
      * @throws DocumentException pdf创建错误
      */
     void downloadWholeDocument(String documentId) throws IOException, DocumentException {
-        String srcPath = "./temp/" + documentId;
-        String desPath = "./out";
+        String srcPath = sTempPath + "/" + documentId;
         FileUtil.mkdir(new File(srcPath));
-        FileUtil.mkdir(new File(desPath));
+        FileUtil.mkdir(new File(sDesPath));
 
         int page = 1;
         StringBuilder currentDownPage = new StringBuilder();
@@ -59,7 +111,7 @@ class DocumentBrowser {
             }
         }
         System.out.println("\n开始生成...");
-        PdfGenerator.creatPDF(srcPath, desPath + "/" + documentId + ".pdf");
+        PdfGenerator.creatPDF(srcPath, sDesPath + "/" + documentId + ".pdf");
         FileUtil.del(new File(srcPath));
     }
 
