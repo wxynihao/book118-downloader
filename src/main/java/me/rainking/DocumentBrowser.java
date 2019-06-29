@@ -1,5 +1,11 @@
 package me.rainking;
 
+import java.io.*;
+import java.net.URLEncoder;
+import java.util.*;
+
+import com.itextpdf.text.DocumentException;
+
 import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.io.FileUtil;
 import cn.hutool.core.util.ReUtil;
@@ -8,13 +14,6 @@ import cn.hutool.http.HtmlUtil;
 import cn.hutool.http.HttpUtil;
 import cn.hutool.json.JSONUtil;
 import cn.hutool.log.StaticLog;
-import com.itextpdf.text.DocumentException;
-
-import java.io.*;
-import java.net.URLEncoder;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
 
 /**
  * @author Rain
@@ -23,43 +22,133 @@ import java.util.Map;
  */
 class DocumentBrowser {
 
+    String sTempPath = "./temp";
+    String sDesPath = "./out";
+    String sFileNameTaskList = "tasklist.txt";
+    String sFileNameDownloadedPage = "page.txt";
+
+    List<String> readTaskList() {
+        List<String> aTaskDocumentId = new ArrayList<>();
+        String sTaskListPath = sDesPath + "/" + sFileNameTaskList;
+        File pFile = new File(sTaskListPath);
+        String sLine = null;
+
+        if (pFile.exists()) {
+            BufferedReader pReader;
+            try {
+                pReader = new BufferedReader(new FileReader(pFile));
+                while ((sLine = pReader.readLine()) != null) {
+                    sLine = sLine.trim();
+                    if (sLine.length() > 0) { aTaskDocumentId.add(sLine); }
+                }
+                pReader.close();
+            } catch (IOException e) {
+                // TODO Auto-generated catch block
+                e.printStackTrace();
+            }
+        }
+        return aTaskDocumentId;
+    }
+
+    void writeTaskList(List<String> pLists) {
+        String sTaskListPath = sDesPath + "/" + sFileNameTaskList;
+        File pFile = new File(sTaskListPath);
+        if (! pFile.exists()) {
+            FileUtil.mkdir(sDesPath);
+        }
+        try {
+            BufferedOutputStream pWriter = new BufferedOutputStream(new FileOutputStream(sTaskListPath));
+            for (String sDocumentId : pLists) {
+                pWriter.write(sDocumentId.getBytes());
+                pWriter.write('\n');
+            }
+            pWriter.close();
+        } catch (IOException e) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+        }
+    }
+
+    int readDownloadedPage(String sDocumentId) {
+        int nPage = 1;
+        File pFile = new File(sTempPath + "/" + sDocumentId + "/" + sFileNameDownloadedPage);
+        if (pFile.exists()) {
+            try {
+                Scanner pSc = new Scanner(pFile);
+                if (pSc.hasNextInt()) { nPage = pSc.nextInt(); }
+            } catch (FileNotFoundException e) {
+                e.printStackTrace();
+            }
+        }
+        return nPage;
+    }
+
+    void writeDownloadedPagge(String sDocumentId, int nPage) {
+        File pFile = new File(sTempPath + "/" + sDocumentId + "/" + sFileNameDownloadedPage);
+        try {
+            BufferedOutputStream pOut = new BufferedOutputStream(new FileOutputStream(pFile));
+            pOut.write(String.valueOf(nPage).getBytes());
+            pOut.close();
+        } catch (FileNotFoundException e) {
+            e.printStackTrace();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    String moveToNextPage(PdfInfo pInfo) {
+        String sNextPage = getNextPage(pInfo);
+        try {
+            pInfo.setImg(URLEncoder.encode(sNextPage, "utf8"));
+        } catch (UnsupportedEncodingException e) {
+            e.printStackTrace();
+        }
+        return sNextPage;
+    }
+
     /**
-     * 下载文档的全部图片
+     *  下载文档的全部图片
      *
      * @param documentId 文档编号
      * @throws IOException       pdf创建错误
      * @throws DocumentException pdf创建错误
      */
     void downloadWholeDocument(String documentId) throws IOException, DocumentException {
-        String srcPath = "./temp/" + documentId;
-        String desPath = "./out";
+        String srcPath = sTempPath + "/" + documentId;
         FileUtil.mkdir(new File(srcPath));
-        FileUtil.mkdir(new File(desPath));
+        FileUtil.mkdir(new File(sDesPath));
 
-        int page = 1;
+        int page = 1, nDownloadedPage;
+        // 断点下载
+        nDownloadedPage = readDownloadedPage(documentId);
+        if (nDownloadedPage != 1) {
+            System.out.println(String.format("下载继续，当前已完成 %d 页", nDownloadedPage));
+            nDownloadedPage ++;
+        }
         StringBuilder currentDownPage = new StringBuilder();
         PdfInfo pdfInfo = getPdfInfo(documentId);
         String imgUrl;
         System.out.println("\n开始下载...");
         while (pdfInfo != null) {
-            String nextPage = getNextPage(pdfInfo);
+            String nextPage = moveToNextPage(pdfInfo);
             if (!Constants.TAG_OF_END.contains(nextPage)) {
+                //跳过已下载的文件
+                if (page < nDownloadedPage) {
+                    System.out.print(String.format("\r当前页码: [%d]  已跳过", page));
+                    page ++; continue;
+                }
                 imgUrl = (pdfInfo.getHost() + Constants.IMG_PREFIX_URL + nextPage);
                 downloadFile(imgUrl, srcPath + "/" + autoGenericCode(page, Constants.MAX_BIT_OF_PAGE) + ".gif");
                 currentDownPage.append("\r").append(String.format("已下载页数：[%d] 页", page));
                 System.out.print(currentDownPage);
+                writeDownloadedPagge(documentId, page);                             // 保存当前下载完成页码
                 page++;
             } else {
                 break;
             }
-            try {
-                pdfInfo.setImg(URLEncoder.encode(nextPage, "utf8"));
-            } catch (UnsupportedEncodingException e) {
-                e.printStackTrace();
-            }
         }
         System.out.println("\n开始生成...");
-        PdfGenerator.creatPDF(srcPath, desPath + "/" + documentId + ".pdf");
+        PdfGenerator.creatPDF(srcPath, sDesPath + "/" + documentId + ".pdf", "gif");
         FileUtil.del(new File(srcPath));
     }
 
