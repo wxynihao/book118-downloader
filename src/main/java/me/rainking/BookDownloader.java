@@ -48,7 +48,7 @@ public class BookDownloader {
         DocumentBrowser browser = new DocumentBrowser();
         Scanner pSc = new Scanner(System.in, "UTF8");
 
-        System.out.println("Ver.20190313 latest: https://github.com/wxynihao/book118-downloader");
+        System.out.println("Ver.20190629 latest: https://github.com/wxynihao/book118-downloader");
         List<String> pDocumentIDList = browser.readTaskList();
 
         // 判断是否需要执行预设任务/遗留任务
