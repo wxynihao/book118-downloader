@@ -1,17 +1,8 @@
 package me.rainking;
 
-import java.io.BufferedOutputStream;
-import java.io.BufferedReader;
-import java.io.File;
-import java.io.FileOutputStream;
-import java.io.FileReader;
-import java.io.IOException;
-import java.io.UnsupportedEncodingException;
+import java.io.*;
 import java.net.URLEncoder;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 import com.itextpdf.text.DocumentException;
 
@@ -76,6 +67,43 @@ class DocumentBrowser {
         }
     }
 
+    int readDownloadedPage(String sDocumentId) {
+        int nPage = 1;
+        File pFile = new File(sTempPath + "/" + sDocumentId + "/page,txt");
+        if (pFile.exists()) {
+            try {
+                Scanner pSc = new Scanner(pFile);
+                if (pSc.hasNextInt()) { nPage = pSc.nextInt(); }
+            } catch (FileNotFoundException e) {
+                e.printStackTrace();
+            }
+        }
+        return nPage;
+    }
+
+    void writeDownloadedPagge(String sDocumentId, int nPage) {
+        File pFile = new File(sTempPath + "/" + sDocumentId + "/page,txt");
+        try {
+            BufferedOutputStream pOut = new BufferedOutputStream(new FileOutputStream(pFile));
+            pOut.write(String.valueOf(nPage).getBytes());
+            pOut.close();
+        } catch (FileNotFoundException e) {
+            e.printStackTrace();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    String moveToNextPage(PdfInfo pInfo) {
+        String sNextPage = getNextPage(pInfo);
+        try {
+            pInfo.setImg(URLEncoder.encode(sNextPage, "utf8"));
+        } catch (UnsupportedEncodingException e) {
+            e.printStackTrace();
+        }
+        return sNextPage;
+    }
+
     /**
      *  下载文档的全部图片
      *
@@ -88,26 +116,33 @@ class DocumentBrowser {
         FileUtil.mkdir(new File(srcPath));
         FileUtil.mkdir(new File(sDesPath));
 
-        int page = 1;
+        int page = 1, nDownloadedPage;
+        // 断点下载
+        nDownloadedPage = readDownloadedPage(documentId);
+        if (nDownloadedPage != 1) {
+            System.out.println(String.format("下载继续，当前已完成 %d 页", nDownloadedPage));
+            nDownloadedPage ++;
+        }
         StringBuilder currentDownPage = new StringBuilder();
         PdfInfo pdfInfo = getPdfInfo(documentId);
         String imgUrl;
         System.out.println("\n开始下载...");
         while (pdfInfo != null) {
-            String nextPage = getNextPage(pdfInfo);
+            String nextPage = moveToNextPage(pdfInfo);
             if (!Constants.TAG_OF_END.contains(nextPage)) {
+                //跳过已下载的文件
+                if (page < nDownloadedPage) {
+                    System.out.print(String.format("\r当前页码: [%d]  已跳过", page));
+                    page ++; continue;
+                }
                 imgUrl = (pdfInfo.getHost() + Constants.IMG_PREFIX_URL + nextPage);
                 downloadFile(imgUrl, srcPath + "/" + autoGenericCode(page, Constants.MAX_BIT_OF_PAGE) + ".gif");
                 currentDownPage.append("\r").append(String.format("已下载页数：[%d] 页", page));
                 System.out.print(currentDownPage);
+                writeDownloadedPagge(documentId, page);                             // 保存当前下载完成页码
                 page++;
             } else {
                 break;
-            }
-            try {
-                pdfInfo.setImg(URLEncoder.encode(nextPage, "utf8"));
-            } catch (UnsupportedEncodingException e) {
-                e.printStackTrace();
             }
         }
         System.out.println("\n开始生成...");
