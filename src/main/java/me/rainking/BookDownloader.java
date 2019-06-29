@@ -112,7 +112,7 @@ public class BookDownloader {
                                 return pPattern.matcher(item).matches();
                             }
                         }, pSc).trim();
-                if (sCmd == "#") { nFlag = false; }
+                if (sCmd.equals("#")) { nFlag = false; }
                 Matcher pMatcher = pPattern.matcher(sCmd);
                 if (pMatcher.find()) {
                     sCmd = pMatcher.group(1);
