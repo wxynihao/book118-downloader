@@ -28,7 +28,7 @@ public class PdfGenerator {
      * @throws DocumentException pdf相关错误
      * @throws IOException       图片相关错误
      */
-    public static void creatPDF(String srcPahOfImg, String desPathOfPdf) throws DocumentException, IOException {
+    public static void creatPDF(String srcPahOfImg, String desPathOfPdf, String sSufix) throws DocumentException, IOException {
 
         File file = new File(srcPahOfImg);
         File[] picFiles = file.listFiles();
@@ -39,16 +39,20 @@ public class PdfGenerator {
 
         //需要根据第一页创建document的大小
         //如果不根据第一页创建，即使修改document的大小也不会生效，困惑
+        // Fix: 创建文档是需要指定文档的尺寸, 该尺寸为文档的默认尺寸
+        // Fix: setPageSize 修改的是加入文档的最后一页, 因此需要先添加页，再修改文档大小
         Image firstImg = Image.getInstance(files.get(0).getCanonicalPath());
         Document document = new Document(new Rectangle(firstImg.getWidth(), firstImg.getHeight()), 0, 0, 0, 0);
         PdfWriter.getInstance(document, new FileOutputStream(desPathOfPdf));
         document.open();
-        document.add(firstImg);
 
-        for (int i = 1; i < files.size(); i++) {
-            Image img = Image.getInstance(files.get(i).getCanonicalPath());
-            document.setPageSize(new Rectangle(img.getWidth(), img.getHeight()));
+        for (File picFile : picFiles) {
+            String sFileName = picFile.getCanonicalPath();
+            // 过滤出指定后缀名的文件
+            if (!sFileName.substring(sFileName.lastIndexOf('.') + 1).equals(sSufix)) { continue; }
+            Image img = Image.getInstance(sFileName);
             document.add(img);
+            document.setPageSize(new Rectangle(img.getWidth(), img.getHeight()));
         }
         document.close();
     }

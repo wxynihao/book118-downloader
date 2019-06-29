@@ -148,7 +148,7 @@ class DocumentBrowser {
             }
         }
         System.out.println("\n开始生成...");
-        PdfGenerator.creatPDF(srcPath, sDesPath + "/" + documentId + ".pdf");
+        PdfGenerator.creatPDF(srcPath, sDesPath + "/" + documentId + ".pdf", "gif");
         FileUtil.del(new File(srcPath));
     }
 
