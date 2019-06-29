@@ -24,10 +24,12 @@ class DocumentBrowser {
 
     String sTempPath = "./temp";
     String sDesPath = "./out";
+    String sFileNameTaskList = "tasklist.txt";
+    String sFileNameDownloadedPage = "page.txt";
 
     List<String> readTaskList() {
         List<String> aTaskDocumentId = new ArrayList<>();
-        String sTaskListPath = sDesPath + "/tasklist.txt";
+        String sTaskListPath = sDesPath + "/" + sFileNameTaskList;
         File pFile = new File(sTaskListPath);
         String sLine = null;
 
@@ -49,7 +51,7 @@ class DocumentBrowser {
     }
 
     void writeTaskList(List<String> pLists) {
-        String sTaskListPath = sDesPath + "/tasklist.txt";
+        String sTaskListPath = sDesPath + "/" + sFileNameTaskList;
         File pFile = new File(sTaskListPath);
         if (! pFile.exists()) {
             FileUtil.mkdir(sDesPath);
@@ -69,7 +71,7 @@ class DocumentBrowser {
 
     int readDownloadedPage(String sDocumentId) {
         int nPage = 1;
-        File pFile = new File(sTempPath + "/" + sDocumentId + "/page,txt");
+        File pFile = new File(sTempPath + "/" + sDocumentId + "/" + sFileNameDownloadedPage);
         if (pFile.exists()) {
             try {
                 Scanner pSc = new Scanner(pFile);
@@ -82,7 +84,7 @@ class DocumentBrowser {
     }
 
     void writeDownloadedPagge(String sDocumentId, int nPage) {
-        File pFile = new File(sTempPath + "/" + sDocumentId + "/page,txt");
+        File pFile = new File(sTempPath + "/" + sDocumentId + "/" + sFileNameDownloadedPage);
         try {
             BufferedOutputStream pOut = new BufferedOutputStream(new FileOutputStream(pFile));
             pOut.write(String.valueOf(nPage).getBytes());
