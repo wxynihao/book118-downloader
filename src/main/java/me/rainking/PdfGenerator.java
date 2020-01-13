@@ -10,6 +10,7 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.util.Arrays;
+import java.util.Comparator;
 import java.util.List;
 
 /**
@@ -36,6 +37,7 @@ public class PdfGenerator {
             return;
         }
         List<File> files = Arrays.asList(picFiles);
+        files.sort((o1, o2) -> o1.getName().compareTo(o2.getName()));
 
         //需要根据第一页创建document的大小
         //如果不根据第一页创建，即使修改document的大小也不会生效，困惑
