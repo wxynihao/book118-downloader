@@ -150,7 +150,7 @@ class DocumentBrowser {
         String url = Constants.OPEN_FULL_URL + documentId;
         String pdfPageUrlStr = HttpUtil.get(url);
 
-        if (StrUtil.isNotBlank(pdfPageUrlStr)) {
+        if (StrUtil.isNotBlank(pdfPageUrlStr) && pdfPageUrlStr.startsWith("//")) {
             pdfPageUrlStr = "https:" + pdfPageUrlStr;
         } else {
             StaticLog.error("获取失败！");
