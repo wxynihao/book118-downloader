@@ -13,6 +13,7 @@ import java.util.stream.Collectors;
 
 import cn.hutool.core.io.file.FileReader;
 import cn.hutool.core.io.file.FileWriter;
+import cn.hutool.json.JSONObject;
 import com.itextpdf.text.DocumentException;
 
 import cn.hutool.core.bean.BeanUtil;
@@ -61,7 +62,7 @@ class DocumentBrowser {
         if (FileUtil.exist(filePath)) {
             FileReader fileReader = new FileReader(filePath);
             String sPage = fileReader.readString();
-            nPage = Integer.valueOf(sPage);
+            nPage = Integer.parseInt(sPage);
         }
         return nPage;
     }
@@ -83,7 +84,7 @@ class DocumentBrowser {
     }
 
     /**
-     *  下载文档的全部图片
+     * 下载文档的全部图片
      *
      * @param documentId 文档编号
      * @throws IOException       pdf创建错误
@@ -94,50 +95,107 @@ class DocumentBrowser {
         FileUtil.mkdir(new File(srcPath));
         FileUtil.mkdir(new File(DES_PATH));
 
-        int page = 1, nDownloadedPage;
-        // 断点下载
-        nDownloadedPage = readDownloadedPage(documentId);
-        if (nDownloadedPage != 1) {
-            System.out.println(String.format("下载继续，当前已完成 %d 页", nDownloadedPage));
-            nDownloadedPage ++;
-        }
+        StaticLog.info("\n开始解析...");
+        String url = getPreviewData(documentId);
+        Map<String, String> pageAndUrl = getPicUrl(url);
+        StaticLog.info("\n解析完成，共{}页", pageAndUrl.size());
+
         StringBuilder currentDownPage = new StringBuilder();
-        PdfInfo pdfInfo = getPdfInfo(documentId);
-        String imgUrl;
         StaticLog.info("\n开始下载...");
-        while (pdfInfo != null) {
-            String nextPage = moveToNextPage(pdfInfo);
-            if (!Constants.TAG_OF_END.contains(nextPage)) {
-                //跳过已下载的文件
-                if (page < nDownloadedPage) {
-                    System.out.print(String.format("\r当前页码: [%d]  已跳过", page));
-                    page ++; continue;
-                }
-                imgUrl = (pdfInfo.getHost() + Constants.IMG_PREFIX_URL + nextPage);
-                downloadFile(imgUrl, srcPath + "/" + autoGenericCode(page, Constants.MAX_BIT_OF_PAGE) + ".gif");
-                currentDownPage.append("\r").append(String.format("已下载页数：[%d] 页", page));
-                System.out.print(currentDownPage);
-                // 保存当前下载完成页码
-                writeDownloadedPage(documentId, page);
-                page++;
-            } else {
-                break;
-            }
+        int i = 0;
+        for (Map.Entry<String, String> entry : pageAndUrl.entrySet()) {
+            downloadFile("http:" + entry.getValue(), srcPath + "/" + autoGenericCode(Integer.parseInt(entry.getKey())) + ".gif");
+            currentDownPage.append("\r").append(String.format("已下载页数：[%s] 页", ++i));
+            System.out.print(currentDownPage);
         }
+
         StaticLog.info("\n开始生成...");
         PdfGenerator.creatPDF(srcPath, DES_PATH + "/" + documentId + ".pdf", "gif");
         FileUtil.del(new File(srcPath));
+        StaticLog.info("\n生成完成");
     }
 
     /**
      * 将数字字符串的左边补充0，使其长度达到指定长度
      *
      * @param number 需要处理的数字
-     * @param width  补充后字符串长度
      * @return 通过填充0达到长度的数字字符串
      */
-    private String autoGenericCode(int number, int width) {
-        return String.format("%0" + width + "d", number);
+    private String autoGenericCode(int number) {
+        return String.format("%0" + Constants.MAX_BIT_OF_PAGE + "d", number);
+    }
+
+    private Map<String, String> getPicUrl(String baseUrl) {
+        Map<String, String> pageNumAndUrl = new HashMap<>();
+        // 第一次获取，解析总页数
+        int page = 1;
+        int step = 6;
+        String firstGet = HttpUtil.get(baseUrl + page);
+        JSONObject data = getJson(firstGet, "data");
+        data.forEach((k, v) -> pageNumAndUrl.put(k, v.toString()));
+        JSONObject pages = getJson(firstGet, "pages");
+        int limit = getPreviewLimit(pages);
+        StaticLog.info("\n共需解析{}页", limit);
+        if (limit > step) {
+            for (int i = page + step; i < limit; ) {
+                StaticLog.info("\n解析至第{}页", i);
+                // 必须休眠，否则获取不到结果
+                try {
+                    Thread.sleep(1000);
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
+                String getContent = HttpUtil.get(baseUrl + i);
+                JSONObject dataContent = getJson(getContent, "data");
+                // 未获取到则进行重试，直至获取到
+                if (!"".equals(dataContent.getStr(String.valueOf(i)))) {
+                    i += step;
+                    dataContent.forEach((k, v) -> pageNumAndUrl.put(k, v.toString()));
+                }
+            }
+        }
+        return pageNumAndUrl;
+    }
+
+    //  "pages": {"preview": "50", "actual": "796", "filetype": "pdf"}
+    private int getPreviewLimit(JSONObject pages) {
+        String limitStr = pages.getStr("preview");
+        return Integer.parseInt(limitStr);
+    }
+
+    private JSONObject getJson(String all, String key) {
+        int pos = all.indexOf(key);
+        int start = all.indexOf("{", pos + 1);
+        int end = all.indexOf("}", start + 1);
+        return JSONUtil.parseObj(all.substring(start, end + 1));
+    }
+
+    private String getPreviewData(String documentId) {
+        String url = Constants.PREVIEW_URL + documentId;
+        String previewDataFull = HttpUtil.get(url);
+        int pos = previewDataFull.indexOf("PREVIEW_DATA");
+        Integer pId = parseProjectId(previewDataFull, pos);
+        String aid = parseStrInPreviewData(previewDataFull, "aid", pos);
+        String viewToken = parseStrInPreviewData(previewDataFull, "view_token", pos);
+        String aidEncode = parseStrInPreviewData(previewDataFull, "aid_encode", pos);
+        return StrUtil.format(Constants.PIC_LINK_URL, pId, aid, viewToken, aidEncode);
+    }
+
+    private int parseProjectId(final String previewDataFull, int pos) {
+        int keyPos = previewDataFull.indexOf("project_id", pos);
+        int start = previewDataFull.indexOf(":", keyPos + 1);
+        int end = previewDataFull.indexOf(",", start + 1);
+        return Integer.parseInt(previewDataFull.substring(start + 1, end).trim());
+    }
+
+    private String parseStrInPreviewData(final String previewDataFull, String key, int pos) {
+        int keyPos = previewDataFull.indexOf(key, pos);
+        if (keyPos == -1) {
+            return null;
+        }
+        int start = previewDataFull.indexOf("'", keyPos + 1);
+        int end = previewDataFull.indexOf("'", start + 1);
+        return previewDataFull.substring(start + 1, end);
     }
 
     /**
@@ -162,9 +220,9 @@ class DocumentBrowser {
         String redirectPage = HttpUtil.get(pdfPageUrlStr);
         String href = ReUtil.get(Constants.HREF_PATTERN, redirectPage, 1);
         String fullUrl;
-        if(href != null){
-            fullUrl = viewHost.substring(0, viewHost.length()-1) + HtmlUtil.unescape(href);
-        }else {
+        if (href != null) {
+            fullUrl = viewHost.substring(0, viewHost.length() - 1) + HtmlUtil.unescape(href);
+        } else {
             fullUrl = pdfPageUrlStr;
         }
 
@@ -214,5 +272,11 @@ class DocumentBrowser {
         } catch (IOException e) {
             StaticLog.error(e.getMessage());
         }
+    }
+
+    public static void main(String[] args) {
+        DocumentBrowser documentBrowser = new DocumentBrowser();
+        String url = documentBrowser.getPreviewData("5032121100002141");
+        System.out.println(documentBrowser.getPicUrl(url));
     }
 }

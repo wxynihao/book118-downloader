@@ -1,0 +1,16 @@
+### 情况一
+### 文档详情页
+GET https://max.book118.com/html/2017/0504/104201745.shtm
+
+### 预览页
+GET https://max.book118.com/index.php?g=Home&m=NewView&a=index&aid=5032121100002141
+
+### 预览图片地址 每次最多6页
+GET https://openapi.book118.com/getPreview.html?project_id=1&aid=246251736&view_token=zRvl7wn2IwANNnujrBTm6lAionOFBWTy&aid_encode=5032121100002141&page=7
+
+### 情况二 PPT 使用原来的方式
+### 预览页
+GET https://max.book118.com/index.php?g=Home&m=NewView&a=index&aid=8067013053002102
+
+### 预览图片
+GET https://openapi.book118.com/getPreview.html?project_id=1&aid=266435511&view_token=x4b_euYB7s52V7qX4qUngljg22LDMglS&aid_encode=8067013053002102&page=1

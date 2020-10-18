@@ -26,7 +26,7 @@ public class BookDownloader {
     public static String getKey(String sTitle, String sErrorMessage, Function<String, Boolean> op, Scanner pSc) {
 
         String sLine = "";
-        Boolean nFlag = true;
+        boolean nFlag = true;
 
         // 输出提示信息
         System.out.print(sTitle);
@@ -48,7 +48,7 @@ public class BookDownloader {
         DocumentBrowser browser = new DocumentBrowser();
         Scanner pSc = new Scanner(System.in, "UTF8");
 
-        System.out.println("Ver.20190629 latest: https://github.com/wxynihao/book118-downloader");
+        System.out.println("Ver.20201018 latest: https://github.com/wxynihao/book118-downloader");
         List<String> pDocumentIDList = browser.readTaskList();
 
         // 判断是否需要执行预设任务/遗留任务
@@ -59,7 +59,7 @@ public class BookDownloader {
             if (sKey.toUpperCase().equals("N")) { pDocumentIDList.clear(); }
         }
 
-        Boolean nFlag = true;
+        boolean nFlag = true;
         while (nFlag) {
             // 执行任务
             if (pDocumentIDList.size() > 0) {
@@ -74,14 +74,11 @@ public class BookDownloader {
                     List<String> pLists = new ArrayList<>(Arrays.asList(new String[pDocumentIDList.size()]));
                     Collections.copy(pLists, pDocumentIDList);
 
-                    System.out.println(String.format("下载文档： %s", sDocumentID));
+                    System.out.printf("下载文档： %s%n", sDocumentID);
                     try {
                         browser.downloadWholeDocument(sDocumentID);
                         System.out.println("生成" + sDocumentID + "完成, 请到out文件夹查看。\n");
-                    } catch (IOException e) {
-                        // TODO Auto-generated catch block
-                        e.printStackTrace();
-                    } catch (DocumentException e) {
+                    } catch (IOException | DocumentException e) {
                         // TODO Auto-generated catch block
                         e.printStackTrace();
                     }
@@ -118,7 +115,7 @@ public class BookDownloader {
                     sCmd = pMatcher.group(1);
                     if (sCmd == null) { sCmd = pMatcher.group(2); }
                     pDocumentIDList.add(sCmd);
-                    System.out.println(String.format("下载任务 %s 已填加", sCmd));
+                    System.out.printf("下载任务 %s 已填加%n", sCmd);
                 }
             }
             // 写入任务列表

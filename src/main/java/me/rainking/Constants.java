@@ -20,6 +20,10 @@ class Constants {
 
     static final String OPEN_FULL_URL = "https://max.book118.com/index.php?g=Home&m=View&a=viewUrl&flag=1&cid=";
 
+    static final String PREVIEW_URL = "https://max.book118.com/index.php?g=Home&m=NewView&a=index&aid=";
+
+    static final String PIC_LINK_URL = "https://openapi.book118.com/getPreview.html?project_id={}&aid={}&view_token={}&aid_encode={}&page=";
+
     static final String FILE_NOT_EXIST = "文件不存在";
 
     static final List<String> TAG_OF_END = CollUtil.newArrayList("!", "Over", "Error", "Response", "ReadLimit");
