@@ -1,3 +1,5 @@
+> **注意：本文档是早期（2018 年前后）针对 book118 旧版预览接口（view43.book118.com / GetNextPage 等）的逆向分析笔记，与当前实现所用的接口（openapi.book118.com getPreview.html）已不一致，仅作历史参考，勿按此文档排查现网问题。**
+
 ```javascript
 /*
  * 全屏方法

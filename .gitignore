@@ -1,5 +1,6 @@
 # Maven #
 target/
+dependency-reduced-pom.xml
 
 # IDEA #
 .idea/
@@ -14,3 +15,6 @@ target/
 # temp and out
 out/
 temp/
+
+# macOS
+.DS_Store

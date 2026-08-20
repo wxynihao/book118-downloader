@@ -9,13 +9,24 @@ import java.util.Scanner;
 public class BookDownloader {
 
     public static void main(String[] args) {
-        System.out.println("Ver.20210316 latest: https://github.com/wxynihao/book118-downloader");
-        System.out.println("Please input document id：");
+        System.out.println("V2026.0820 latest: https://github.com/wxynihao/book118-downloader");
         DocumentBrowser browser = new DocumentBrowser();
-        Scanner scan = new Scanner(System.in, "UTF8");
-        if (scan.hasNext()) {
-            String documentId = scan.next();
-            browser.downloadWholeDocument(documentId);
+        if (args.length > 0) {
+            for (String arg : args) {
+                browser.downloadWholeDocument(arg);
+            }
+            return;
+        }
+        System.out.println("Please input document id or url (empty line to exit)：");
+        try (Scanner scan = new Scanner(System.in, "UTF8")) {
+            while (scan.hasNextLine()) {
+                String line = scan.nextLine().trim();
+                if (line.isEmpty()) {
+                    break;
+                }
+                browser.downloadWholeDocument(line);
+                System.out.println("\nPlease input next document id or url (empty line to exit)：");
+            }
         }
     }
 }
