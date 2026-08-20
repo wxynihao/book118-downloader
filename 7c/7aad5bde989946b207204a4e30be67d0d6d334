@@ -1,0 +1,39 @@
+.gitignore
+  s_4059f6ba1cb57b::t_7be5ba6964c6fd 3,17-20
+Analysis.md
+  s_4059f6ba1cb57b::t_7be5ba6964c6fd 2
+README.md
+  s_4059f6ba1cb57b::t_7be5ba6964c6fd 8,16,18,22-23,38-42,45-48
+pom.xml
+  s_4059f6ba1cb57b::t_7be5ba6964c6fd 9,24,29,34,44,66
+src/main/java/me/rainking/BookDownloader.java
+  s_4059f6ba1cb57b::t_7be5ba6964c6fd 12,14-18,20-29
+src/main/java/me/rainking/DocumentBrowser.java
+  s_4059f6ba1cb57b::t_7be5ba6964c6fd 4,6,8,18,22-23,33-42,44-47,49,51,53-58,62-70,72-87,89-99,101,109-111,113-121,123-130,132-138,140-148,153-161,163-166,168-170,172-175,177-185,187-193,195-204,206,209-212,215-219,221-222,224-234,237-239,244-247,249-251,253,257-259,263,265-266,269,271-276,278-282,285-286,292-294,299-300,302-314,316-328,332,334-341,345-346,348-349
+src/main/java/me/rainking/PdfGenerator.java
+  s_4059f6ba1cb57b::t_7be5ba6964c6fd 3,13,26-27,31,35,37-38,41-44,46-50,56,64-77
+src/test/java/me/rainking/DocumentBrowserTest.java
+  s_4059f6ba1cb57b::t_7be5ba6964c6fd 3-4,8-13,20-33,35-40,42,45-75,77-88,90-95,97,100,102
+src/test/java/me/rainking/PdfGeneratorTest.java
+  s_4059f6ba1cb57b::t_7be5ba6964c6fd 1-24,26-38,40-47,49-71,73-74
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.4.7",
+  "base_commit_sha": "7c7aad5bde989946b207204a4e30be67d0d6d334",
+  "prompts": {},
+  "sessions": {
+    "s_4059f6ba1cb57b": {
+      "agent_id": {
+        "tool": "github-copilot",
+        "id": "commit-default-ai:github-copilot:unknown",
+        "model": "unknown"
+      },
+      "human_author": "wxy <xiaoyu1.wang@ly.com>",
+      "custom_attributes": {
+        "synthetic_fallback": "true",
+        "attribution_source": "force_commit_ai_config"
+      }
+    }
+  }
+}
